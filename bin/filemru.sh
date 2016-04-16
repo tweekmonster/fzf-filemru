@@ -14,12 +14,19 @@ fi
 GREP_EXCLUDE=""
 MRU=""
 if [ -f "$MRU_FILE" ]; then
+  excl=""
+  if [ "$1" == "--exclude" ]; then
+    excl="$PWD/$2"
+    shift 2
+  fi
   files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD")
   for fn in $files; do
     if [ -e "$fn" ]; then
-      fn="${fn##$PWD/}"
-      MRU+="$fn\n"
-      GREP_EXCLUDE+="${fn}|"
+      cut_fn="${fn##$PWD/}"
+      GREP_EXCLUDE+="${cut_fn}|"
+      if [ "$fn" != "$excl" ]; then
+        MRU+="$cut_fn\n"
+      fi
     fi
   done
 fi

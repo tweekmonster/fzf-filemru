@@ -38,7 +38,7 @@ function! s:fzf_filemru(dir, ...)
   endif
 
   let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), {
-        \   'source': printf('%s --files', s:filemru_bin),
+        \   'source': printf('%s --exclude %s --files', s:filemru_bin, expand('%')),
         \   'sink*': function('s:filemru_sink'),
         \ })
   call fzf#vim#files(a:dir, extra)

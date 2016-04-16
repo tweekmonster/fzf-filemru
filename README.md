@@ -49,5 +49,6 @@ its own.
 
 Switch | Description
 ------ | -----------
+--exclude | Exclude a file from MRU output.  Must be the first switch and relative to the current directory.
 --files | Just find files with MRU files displayed first and exit.
 --update | Updates the MRU with the files specified after this switch.  The files must be relative to the current directory.

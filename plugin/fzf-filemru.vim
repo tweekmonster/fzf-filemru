@@ -30,7 +30,7 @@ function! s:filemru_sink(lines)
 endfunction
 
 
-function! s:fzf_filemru(dir, ...)
+function! s:fzf_filemru(...)
   if !exists('s:common_sink')
     " Grab a reference to fzf.vim's s:common_sink
     let default_opts = fzf#vim#wrap({})
@@ -46,16 +46,14 @@ function! s:fzf_filemru(dir, ...)
   let options = {
         \   'source': fzf_source,
         \   'sink*': function('s:filemru_sink'),
+        \   'options': join(a:000, ' '),
         \ }
-  if get(g:, 'fzf_filemru_nosort', 0)
-    let options['options'] = '--no-sort'
-  endif
   let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), options)
-  call fzf#vim#files(a:dir, extra)
+  call fzf#vim#files('', extra)
 endfunction
 
 
-command! -nargs=? -complete=dir FilesMru call s:fzf_filemru(<q-args>)
+command! -nargs=* FilesMru call s:fzf_filemru(<q-args>)
 
 
 if get(g:, 'fzf_filemru_bufwrite', 0)

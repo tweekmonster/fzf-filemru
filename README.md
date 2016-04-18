@@ -35,6 +35,7 @@ nnoremap <c-p> :FilesMru<cr>
 Option | Description
 ------ | -----------
 `g:fzf_filemru_bufwrite` | Update the MRU on `BufWritePost`.  This can be useful if you want your most saved files to appear near the top of the results.  Default: `0`
+`g:fzf_filemru_nosort` | Set to `1` to disable FZF's sorting.  This allows the MRU files to stay close to the input line.  Default: `0`
 
 
 ## Command Line

@@ -43,10 +43,14 @@ function! s:fzf_filemru(dir, ...)
     let fzf_source .= ' --exclude '.buffer_file
   endif
   let fzf_source .= ' --files'
-  let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), {
+  let options = {
         \   'source': fzf_source,
         \   'sink*': function('s:filemru_sink'),
-        \ })
+        \ }
+  if get(g:, 'fzf_filemru_nosort', 0)
+    let options['options'] = '--no-sort'
+  endif
+  let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), options)
   call fzf#vim#files(a:dir, extra)
 endfunction
 

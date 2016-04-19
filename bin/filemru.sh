@@ -122,7 +122,7 @@ fi
 GREP_EXCLUDE="${GREP_EXCLUDE%|}"
 
 
-if [[ $git_ls -eq 1 ]]; then
+if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
   for p in $(git ls-tree --name-only -r HEAD | grep -E -v "($GREP_EXCLUDE)"); do
     p="$git_root/$p"
     cut_fn="${p##$PWD/}"

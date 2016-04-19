@@ -11,32 +11,10 @@ if [ ! -d "$CACHE" ]; then
   mkdir -p "$CACHE"
 fi
 
-GREP_EXCLUDE=""
-MRU=""
-if [ -f "$MRU_FILE" ]; then
-  excl=""
-  if [ "$1" == "--exclude" ]; then
-    excl="$PWD/$2"
-    shift 2
-  fi
-  files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD")
-  for fn in $files; do
-    if [ -e "$fn" ]; then
-      cut_fn="${fn##$PWD/}"
-      GREP_EXCLUDE+="${cut_fn}|"
-      if [ "$fn" != "$excl" ]; then
-        MRU+="$cut_fn\n"
-      fi
-    fi
-  done
-fi
-GREP_EXCLUDE="${GREP_EXCLUDE%|}"
-
-FIND_CMD=${FZF_DEFAULT_COMMAND:-$DEFAULT_COMMAND}
-
-if [ -n "$GREP_EXCLUDE" ]; then
-  FIND_CMD+=" | grep -E -v '($GREP_EXCLUDE)'"
-fi
+ignore_git_submodules=0
+git_ls=0
+print_files=0
+exclude_file=""
 
 
 update_mru() {
@@ -93,18 +71,77 @@ update_mru() {
 }
 
 
-# Just find files and exit
-if [ "$1" == "--files" ]; then
-  echo -n -e "$MRU"
-  sh -c "$FIND_CMD"
-  exit $?
+while [[ $# > 0 ]]; do
+  case $1 in
+    --exclude)
+      exclude_file="$PWD/$2"
+      shift
+      ;;
+    --files)
+      print_files=1
+      ;;
+    --git)
+      git_ls=1
+      ;;
+    --ignore-submodules)
+      ignore_git_submodules=1
+      ;;
+    --update)
+      shift
+      update_mru $@
+      exit $?
+      ;;
+  esac
+  shift
+done
+
+
+GREP_EXCLUDE=""
+git_root=$(git rev-parse --show-toplevel 2> /dev/null)
+if [[ $ignore_git_submodules -eq 1 && -n "$git_root" && -e "$git_root/.gitmodules" ]]; then
+  for p in $(awk '/path =/{ print $3 }' "$git_root/.gitmodules"); do
+    p="$git_root/$p"
+    GREP_EXCLUDE+="${p##$PWD/}|"
+  done
 fi
 
 
-# Just update the MRU and exit
-if [ "$1" == "--update" ]; then
-  shift
-  update_mru "$@"
+MRU=""
+if [ -f "$MRU_FILE" ]; then
+  files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD")
+  for fn in $files; do
+    if [ -e "$fn" ]; then
+      cut_fn="${fn##$PWD/}"
+      GREP_EXCLUDE+="${cut_fn}|"
+      if [ "$fn" != "$exclude_file" ]; then
+        MRU+="$cut_fn\n"
+      fi
+    fi
+  done
+fi
+GREP_EXCLUDE="${GREP_EXCLUDE%|}"
+
+
+if [[ $git_ls -eq 1 ]]; then
+  for p in $(git ls-tree --name-only -r HEAD | grep -E -v "($GREP_EXCLUDE)"); do
+    p="$git_root/$p"
+    cut_fn="${p##$PWD/}"
+    GREP_EXCLUDE+="${cut_fn}|"
+    MRU+="${cut_fn}\n"
+  done
+  GREP_EXCLUDE="${GREP_EXCLUDE%|}"
+fi
+
+FIND_CMD=${FZF_DEFAULT_COMMAND:-$DEFAULT_COMMAND}
+if [ -n "$GREP_EXCLUDE" ]; then
+  FIND_CMD+=" | grep -E -v '($GREP_EXCLUDE)'"
+fi
+
+
+# Just find files and exit
+if [ $print_files -eq 1 ]; then
+  echo -n -e "$MRU"
+  sh -c "$FIND_CMD"
   exit $?
 fi
 

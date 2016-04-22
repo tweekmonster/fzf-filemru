@@ -95,59 +95,66 @@ while [[ $# > 0 ]]; do
   shift
 done
 
+MRU=$(mktemp -t "fzf-filesmru.XXXXXXXX")
+GREP_EXCLUDE=$(mktemp -t "fzf-filesmru.ignore.XXXXXXXX")
+GREP_EXCLUDE_CMD="grep -v -x -F -f $GREP_EXCLUDE"
 
-GREP_EXCLUDE=""
+cleanup() {
+  rm -f "$MRU"
+  rm -f "$GREP_EXCLUDE"
+}
+
+trap cleanup EXIT
+
+
 git_root=$(git rev-parse --show-toplevel 2> /dev/null)
 if [[ $ignore_git_submodules -eq 1 && -n "$git_root" && -e "$git_root/.gitmodules" ]]; then
   for p in $(awk '/path =/{ print $3 }' "$git_root/.gitmodules"); do
     p="$git_root/$p"
-    GREP_EXCLUDE+="${p##$PWD/}|"
+    echo "${p##$PWD/}" >> $GREP_EXCLUDE
   done
 fi
 
 
-MRU=""
 if [ -f "$MRU_FILE" ]; then
   files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD")
   for fn in $files; do
     if [ -e "$fn" ]; then
       cut_fn="${fn##$PWD/}"
-      GREP_EXCLUDE+="${cut_fn}|"
+      echo "$cut_fn" >> $GREP_EXCLUDE
       if [ "$fn" != "$exclude_file" ]; then
-        MRU+="$cut_fn\n"
+        echo "$cut_fn" >> $MRU
       fi
     fi
   done
 fi
-GREP_EXCLUDE="${GREP_EXCLUDE%|}"
 
 
 if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
-  for p in $(git ls-tree --name-only -r HEAD 2> /dev/null | grep -E -v "($GREP_EXCLUDE)"); do
+  for p in $(git ls-tree --name-only -r HEAD 2> /dev/null | $GREP_EXCLUDE_CMD); do
     p="$git_root/$p"
     cut_fn="${p##$PWD/}"
-    GREP_EXCLUDE+="${cut_fn}|"
-    MRU+="${cut_fn}\n"
+    echo "$cut_fn" >> $GREP_EXCLUDE
+    echo "$cut_fn" >> $MRU
   done
-  GREP_EXCLUDE="${GREP_EXCLUDE%|}"
 fi
 
 FIND_CMD=${FZF_DEFAULT_COMMAND:-$DEFAULT_COMMAND}
-if [ -n "$GREP_EXCLUDE" ]; then
-  FIND_CMD+=" | grep -E -v '($GREP_EXCLUDE)'"
+if [ -s "$GREP_EXCLUDE" ]; then
+  FIND_CMD+=" | $GREP_EXCLUDE_CMD"
 fi
 
 
 # Just find files and exit
 if [ $print_files -eq 1 ]; then
-  echo -n -e "$MRU"
+  cat $MRU
   sh -c "$FIND_CMD"
   exit $?
 fi
 
 
 # Act as FZF and update FILE_MRU after selection is made
-FIND_CMD="echo -n ""\$_FZF_MRU"" && $FIND_CMD"
+FIND_CMD="cat ""\$_FZF_MRU"" && $FIND_CMD"
 SELECTIONS=($(exec env _FZF_MRU="$MRU" FZF_DEFAULT_COMMAND="$FIND_CMD" fzf))
 
 if [ ${#SELECTIONS[@]} -eq 0 ]; then

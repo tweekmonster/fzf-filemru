@@ -15,7 +15,11 @@ ignore_git_submodules=0
 git_ls=0
 print_files=0
 exclude_file=""
-
+color_mru=""
+color_git=""
+prefix_mru="mru"
+prefix_git="git"
+prefix_std=" - "
 
 update_mru() {
   # Update MRU_FILE with new selections.  New selections are moved to the top
@@ -91,6 +95,14 @@ while [[ $# > 0 ]]; do
       update_mru $@
       exit $?
       ;;
+    --mru-color)
+      color_mru=$2
+      shift
+      ;;
+    --git-color)
+      color_git=$2
+      shift
+      ;;
   esac
   shift
 done
@@ -109,7 +121,7 @@ trap cleanup EXIT
 
 git_root=$(git rev-parse --show-toplevel 2> /dev/null)
 if [[ $ignore_git_submodules -eq 1 && -n "$git_root" && -e "$git_root/.gitmodules" ]]; then
-  for p in $(awk '/path =/{ print $3 }' "$git_root/.gitmodules"); do
+  for p in $(git submodule foreach -q 'git ls-tree --name-only --full-name -r HEAD | awk "\$0=\"$path/\"\$0"' 2>/dev/null); do
     p="$git_root/$p"
     echo "${p##$PWD/}" >> $GREP_EXCLUDE
   done
@@ -117,13 +129,17 @@ fi
 
 
 if [ -f "$MRU_FILE" ]; then
-  files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD")
+  files=$(cat "$MRU_FILE" | cut -d, -f3 | grep "^$PWD/")
   for fn in $files; do
     if [ -e "$fn" ]; then
       cut_fn="${fn##$PWD/}"
       echo "$cut_fn" >> $GREP_EXCLUDE
       if [ "$fn" != "$exclude_file" ]; then
-        echo "$cut_fn" >> $MRU
+        if [ -n "$color_mru" ]; then
+          echo -e "\e[38;5;${color_mru}m${prefix_mru}\e[m ${cut_fn}" >> $MRU
+        else
+          echo "${prefix_mru} $cut_fn" >> $MRU
+        fi
       fi
     fi
   done
@@ -135,7 +151,11 @@ if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
     p="$git_root/$p"
     cut_fn="${p##$PWD/}"
     echo "$cut_fn" >> $GREP_EXCLUDE
-    echo "$cut_fn" >> $MRU
+    if [ -n "$color_git" ]; then
+      echo -e "\e[38;5;${color_git}m${prefix_git}\e[m ${cut_fn}" >> $MRU
+    else
+      echo "${prefix_git} $cut_fn" >> $MRU
+    fi
   done
 fi
 
@@ -143,6 +163,7 @@ FIND_CMD=${FZF_DEFAULT_COMMAND:-$DEFAULT_COMMAND}
 if [ -s "$GREP_EXCLUDE" ]; then
   FIND_CMD+=" | $GREP_EXCLUDE_CMD"
 fi
+FIND_CMD+=" | awk '\$0=\"${prefix_std} \"\$0'"
 
 
 # Just find files and exit
@@ -155,7 +176,7 @@ fi
 
 # Act as FZF and update FILE_MRU after selection is made
 FIND_CMD="cat ""\$_FZF_MRU"" && $FIND_CMD"
-SELECTIONS=($(exec env _FZF_MRU="$MRU" FZF_DEFAULT_COMMAND="$FIND_CMD" fzf))
+SELECTIONS=($(exec env _FZF_MRU="$MRU" FZF_DEFAULT_COMMAND="$FIND_CMD" fzf --ansi --nth=2 | awk '{ print $2 }'))
 
 if [ ${#SELECTIONS[@]} -eq 0 ]; then
   exit $?

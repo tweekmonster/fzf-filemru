@@ -53,6 +53,8 @@ sorting filename matches first.
   `ProjectMru`.  Default: `0`
 - `g:fzf_filemru_ignore_submodule` - Ignore git submodule directories.  Always
   enabled for `ProjectMru`.  Default: `0`
+- `g:fzf_filemru_colors` - Colors for file prefixes.  Uses the xterm 256
+  [color palette][colors].  Default: `{'mru': 6, 'git': 3}`.
 
 **Note:** Even if git submodule files are ignored, they can still appear in the
 MRU.
@@ -76,3 +78,8 @@ its own.
 - `--git` | Use `git ls-tree` to display repo files after MRU files, but before
   other found files.
 - `--ignore-submodules` | Ignore git submodule directories.
+- `--mru-color` | Color for the MRU prefix.
+- `--git-color` | Color for the Git prefix.
+
+
+[colors]: https://upload.wikimedia.org/wikipedia/en/1/15/Xterm_256color_chart.svg

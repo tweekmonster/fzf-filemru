@@ -23,9 +23,14 @@ endfunction
 
 " Update MRU and pass-through to s:common_sink
 function! s:filemru_sink(lines) abort
-  call s:update_mru(a:lines)
+  let selections = []
+  for l in a:lines
+    let l = substitute(l, '^\(\s*\S\+\s\)', '', '')
+    call add(selections, l)
+  endfor
+  call s:update_mru(selections)
   if exists('s:common_sink')
-    call s:common_sink(a:lines)
+    call s:common_sink(selections)
   endfor
 endfunction
 
@@ -50,11 +55,20 @@ function! s:invoke(git_ls, ignore_submodule, options) abort
     let fzf_source .= ' --ignore-submodules'
   endif
 
+  let colors = get(g:, 'fzf_filemru_colors', {'mru': 6, 'git': 3})
+  for c in keys(colors)
+    let cn = get(colors, c, '')
+    if !cn
+      continue
+    endif
+    let fzf_source .= printf(' --%s-color %d', c, cn)
+  endfor
+
   let fzf_source .= ' --files'
   let options = {
         \   'source': fzf_source,
         \   'sink*': function('s:filemru_sink'),
-        \   'options': a:options,
+        \   'options': a:options.' --ansi --nth=2',
         \ }
   let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), options)
   call fzf#vim#files('', extra)

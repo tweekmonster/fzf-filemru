@@ -43,7 +43,7 @@ function! s:invoke(git_ls, ignore_submodule, options) abort
 
   let fzf_source = s:filemru_bin
   let exclude = expand('%')
-  if empty(&l:buftype) && !empty(&l:filetype) && !empty(exclude)
+  if empty(&l:buftype) && !empty(exclude)
     let fzf_source .= ' --exclude '.exclude
   endif
 

@@ -151,10 +151,12 @@ if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
     p="$git_root/$p"
     cut_fn="${p##$PWD/}"
     echo "$cut_fn" >> $GREP_EXCLUDE
-    if [ -n "$color_git" ]; then
-      echo -e "\e[38;5;${color_git}m${prefix_git}\e[m ${cut_fn}" >> $MRU
-    else
-      echo "${prefix_git} $cut_fn" >> $MRU
+    if [ "$p" != "$exclude_file" ]; then
+      if [ -n "$color_git" ]; then
+        echo -e "\e[38;5;${color_git}m${prefix_git}\e[m ${cut_fn}" >> $MRU
+      else
+        echo "${prefix_git} $cut_fn" >> $MRU
+      fi
     fi
   done
 fi

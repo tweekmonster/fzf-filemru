@@ -1,7 +1,9 @@
 # FZF File MRU
 
-This is a Vim plugin that tracks your most recently and frequently used files
+Vim plugin that tracks your most recently and frequently used files
 while using the [fzf.vim](https://github.com/junegunn/fzf.vim) plugin.
+
+![Sweet FZF MRU GIF](https://cloud.githubusercontent.com/assets/111942/14758993/2dcf6748-08e0-11e6-9b0a-3f4d33d5c87c.gif)
 
 This plugin provides the `FilesMru` and `ProjectMru` commands, which are
 basically a pass-throughs to the `Files` command.  So, all you really need to

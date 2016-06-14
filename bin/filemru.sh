@@ -149,6 +149,7 @@ fi
 if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
   for p in $(git ls-tree --name-only -r HEAD 2> /dev/null | $GREP_EXCLUDE_CMD); do
     p="$git_root/$p"
+    [[ ! -e "$p" ]] && continue
     cut_fn="${p##$PWD/}"
     echo "$cut_fn" >> $GREP_EXCLUDE
     if [ "$p" != "$exclude_file" ]; then

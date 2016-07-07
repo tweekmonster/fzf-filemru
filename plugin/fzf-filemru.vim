@@ -31,7 +31,7 @@ function! s:filemru_sink(lines) abort
   call s:update_mru(selections)
   if exists('s:common_sink')
     call s:common_sink(selections)
-  endfor
+  endif
 endfunction
 
 

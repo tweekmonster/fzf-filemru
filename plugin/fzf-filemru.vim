@@ -21,26 +21,36 @@ function! s:update_mru(files) abort
 endfunction
 
 
-" Update MRU and pass-through to s:common_sink
-function! s:filemru_sink(lines) abort
-  let selections = []
-  for l in a:lines
-    let l = substitute(l, '^\(\s*\S\+\s*\)', '', '')
-    call add(selections, l)
-  endfor
-  call s:update_mru(selections)
-  if exists('s:common_sink')
-    call s:common_sink(selections)
-  endif
+" Create FZF options.  Wraps the 'sink*' to clean the file list and update the
+" MRU before passing it to the common_sink.
+" Reference:
+" https://github.com/junegunn/fzf.vim/blob/5a088b24269352885d80525258040bfda4685b1c/autoload/fzf/vim.vim#L404-L415
+function s:wrap_options(options) abort
+  try
+    let wrapped = fzf#wrap('', a:options)
+  catch /E117/
+    let wrapped = fzf#vim#wrap(a:options)
+    echohl WarningMsg
+    echomsg '[fzf-filemru] junegunn/fzf is outdated.'
+    echohl None
+  endtry
+
+  let wrapped.common_sink = remove(wrapped, 'sink*')
+  function! wrapped.sink(lines) abort
+    let selections = []
+    for l in a:lines
+      let l = substitute(l, '^\(\s*\S\+\s*\)', '', '')
+      call add(selections, l)
+    endfor
+    call s:update_mru(selections)
+    return self.common_sink(selections)
+  endfunction
+  let wrapped['sink*'] = remove(wrapped, 'sink')
+  return wrapped
 endfunction
 
 
 function! s:invoke(git_ls, ignore_submodule, options) abort
-  if !exists('s:common_sink')
-    " Grab a reference to fzf.vim's s:common_sink
-    let s:common_sink = get(fzf#vim#wrap({}), 'sink*')
-  endif
-
   let fzf_source = s:filemru_bin
   let exclude = expand('%')
   if empty(&l:buftype) && !empty(exclude)
@@ -65,13 +75,11 @@ function! s:invoke(git_ls, ignore_submodule, options) abort
   endfor
 
   let fzf_source .= ' --files'
-  let options = {
+
+  call fzf#vim#files('', s:wrap_options({
         \   'source': fzf_source,
-        \   'sink*': function('s:filemru_sink'),
         \   'options': a:options.' --ansi --nth=2',
-        \ }
-  let extra = extend(copy(get(g:, 'fzf_layout', g:fzf#vim#default_layout)), options)
-  call fzf#vim#files('', extra)
+        \ }))
 endfunction
 
 

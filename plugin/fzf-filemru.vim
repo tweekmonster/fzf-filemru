@@ -39,7 +39,7 @@ function s:wrap_options(options) abort
   function! wrapped.sink(lines) abort
     let selections = []
     for l in a:lines
-      let l = substitute(l, '^\(\s*\S\+\s*\)', '', '')
+      let l = substitute(l, '^\(\s*\(git\|mru\|\-\)\s\+\)', '', '')
       call add(selections, l)
     endfor
     call s:update_mru(selections)

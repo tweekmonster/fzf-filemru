@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 CACHE=${XDG_CACHE_HOME:-$HOME/.cache}
 MRU_MAX=200
 # MRU_FILE is a list of files that were selected in FZF through this script.
@@ -137,7 +137,7 @@ if [ -f "$MRU_FILE" ]; then
       echo "$cut_fn" >> $GREP_EXCLUDE
       if [ "$fn" != "$exclude_file" ]; then
         if [ -n "$color_mru" ]; then
-          echo -e "\e[38;5;${color_mru}m${prefix_mru}\e[m ${cut_fn}" >> $MRU
+          printf "\e[38;5;${color_mru}m${prefix_mru}\e[m ${cut_fn}\n" >> $MRU
         else
           echo "${prefix_mru} $cut_fn" >> $MRU
         fi
@@ -155,7 +155,7 @@ if [[ -n "$git_root" && $git_ls -eq 1 ]]; then
     echo "$cut_fn" >> $GREP_EXCLUDE
     if [ "$p" != "$exclude_file" ]; then
       if [ -n "$color_git" ]; then
-        echo -e "\e[38;5;${color_git}m${prefix_git}\e[m ${cut_fn}" >> $MRU
+        printf "\e[38;5;${color_git}m${prefix_git}\e[m ${cut_fn}\n" >> $MRU
       else
         echo "${prefix_git} $cut_fn" >> $MRU
       fi

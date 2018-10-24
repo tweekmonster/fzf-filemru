@@ -40,7 +40,7 @@ update_mru() {
 
   echo "$CURRENT" | awk -F',' '
     BEGIN {
-      ts = systime()
+      ts = '$(date +%s)'
       ts -= (ts % 120)
       lastfound = 1
       split("'$SELECTION_PATHS'", files, ",")

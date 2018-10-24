@@ -33,7 +33,8 @@ nnoremap <c-p> :FilesMru --tiebreak=end<cr>
 
 - [fzf.vim](https://github.com/junegunn/fzf.vim)
 - bash
-- gawk
+- awk
+- GNU or MacOS `date` (supporting the `%s` format option)
 
 
 # Command Usage

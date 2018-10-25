@@ -21,6 +21,40 @@ function! s:update_mru(files) abort
 endfunction
 
 
+function! s:cmd_update_mru(verbose, ...) abort
+  let cwd = getcwd()
+  let arg_files = filter(copy(a:000), '!empty(v:val)')
+
+  if empty(arg_files) && empty(&buftype) && &buflisted
+    let arg_files = filter([expand('%')], '!empty(v:val)')
+  endif
+
+  let update_files = []
+  for fname in arg_files
+    let fname = fnamemodify(fname, ':p')
+    let prefix = strpart(fname, 0, strlen(cwd))
+    if prefix !=# cwd
+      if a:verbose
+        echohl ErrorMsg
+        echo 'Not in current dirctory:' fname
+        echohl None
+      endif
+      continue
+    endif
+
+    call add(update_files, strpart(fname, strlen(prefix) + 1))
+  endfor
+
+  if !empty(update_files)
+    call s:update_mru(update_files)
+  elseif a:verbose
+    echohl ErrorMsg
+    echo 'No files to add to MRU'
+    echohl None
+  endif
+endfunction
+
+
 " Create FZF options.  Wraps the 'sink*' to clean the file list and update the
 " MRU before passing it to the common_sink.
 " Reference:
@@ -98,6 +132,7 @@ endfunction
 
 command! -nargs=* FilesMru call s:fzf_filemru(<q-args>)
 command! -nargs=* ProjectMru call s:fzf_projectmru(<q-args>)
+command! -nargs=* -bang UpdateMru call s:cmd_update_mru(<bang>0, <q-args>)
 
 
 if get(g:, 'fzf_filemru_bufwrite', 0)

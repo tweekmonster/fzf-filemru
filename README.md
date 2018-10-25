@@ -17,6 +17,8 @@ appear before all other files.
 `git ls-tree` to display files after MRU files (and before other found files),
 and ignores repository submodule directories.
 
+`UpdateMru` is a utility command that allows you to manually update the MRU.
+
 MRU files are tracked in `$XDG_CACHE_HOME/fzf_filemru`.  A timestamp (rounded
 to 2 minute intervals) and selection count is used to determine recency and
 frequency.
@@ -26,6 +28,17 @@ frequency.
 
 ```vim
 nnoremap <c-p> :FilesMru --tiebreak=end<cr>
+```
+
+The MRU list is updated when a file is saved or selected from the FZF menu.
+Though not recommended, you could update the MRU list when a file is opened by
+other means with the following script:
+
+```vim
+augroup custom_filemru
+  autocmd!
+  autocmd BufWinEnter * UpdateMru
+augroup END
 ```
 
 

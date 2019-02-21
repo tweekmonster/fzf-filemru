@@ -37,7 +37,7 @@ other means with the following script:
 ```vim
 augroup custom_filemru
   autocmd!
-  autocmd BufWinEnter * UpdateMru
+  autocmd BufEnter * UpdateMru
 augroup END
 ```
 

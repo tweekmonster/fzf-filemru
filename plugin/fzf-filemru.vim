@@ -112,7 +112,7 @@ function! s:invoke(git_ls, ignore_submodule, options) abort
 
   call fzf#vim#files('', s:wrap_options({
         \   'source': fzf_source,
-        \   'options': a:options.' --ansi --nth=2',
+        \   'options': a:options.' --ansi --nth=2..',
         \ }))
 endfunction
 
